@@ -1,36 +1,54 @@
 const { MoneyIn, Spending, CashFlow } = require("../Schema/finance.schema");
+const fs = require("fs");
+const { checkImageType } = require("../libs/multerStorage");
+
 module.exports = {
   ADD_NEW_INCOME: (req, res) => {
-    const { name, nominal, desription, date } = req.body;
-    const moneyData = { name, nominal, desription, date };
-    const moneyInSave = new MoneyIn(moneyData);
-    moneyInSave
-      .save()
-      .then((result) => {
-        const cashflowData = {
-          casin_id: result._id,
-          date: result.date,
-        };
-        const cashFlowSave = new CashFlow(cashflowData);
-        cashFlowSave
-          .save(cashFlowSave)
-          .then((result) => {
-            res.json({
-              status: 200,
-              message: "New Income and Cash Flow Added",
-              data: result,
-            });
-          })
-          .catch((error) =>
-            res.status(500).json({ status: 500, message: error })
-          );
-      })
-      .catch((error) => {
-        res.status(500).json({
-          status: 500,
-          message: "Insert failed",
+    const {
+      body: { name, nominal, desription, date },
+      file,
+    } = req;
+    const data = {
+      name,
+      nominal,
+      desription,
+      date,
+      filename: file.filename,
+    };
+    const check = checkImageType(file);
+
+    if (!check) {
+      res.json({ message: "Jpeg or png only" });
+    } else {
+      const moneyInSave = new MoneyIn(data);
+      moneyInSave
+        .save()
+        .then((result) => {
+          const cashflowData = {
+            casin_id: result._id,
+            date: result.date,
+          };
+          const cashFlowSave = new CashFlow(cashflowData);
+          cashFlowSave
+            .save(cashFlowSave)
+            .then((result) => {
+              res.json({
+                status: 200,
+                message: "New Income and Cash Flow Added",
+                data: result,
+              });
+            })
+            .catch((error) =>
+              res.status(500).json({ status: 500, message: error })
+            );
+        })
+        .catch((error) => {
+          res.status(500).json({
+            status: 500,
+            message: error,
+          });
         });
-      });
+    }
   },
   GET_ALL_INCOME: (req, res) => {
     MoneyIn.find()
@@ -168,5 +186,21 @@ module.exports = {
           message: "Delete Fail",
         });
       });
+  },
+  EXAMPLE: (req, res) => {
+    console.time("readFileSync");
+
+    for (let index = 0; index < 100; index++) {
+      fs.readFileSync("./src/Controllers/text.txt", (err, data) => {
+        if (err) throw err;
+        console.log(`File size#${index}: ${Math.round(data.length / 1e6)} MB`);
+      });
+    }
+    fs.readFile("./src/Controllers/text.txt", "utf-8", (err, data) => {
+      if (err) console.log(err);
+      console.log("file.txt data: ", data);
+    });
+
+    console.timeEnd("readFileSync");
   },
 };

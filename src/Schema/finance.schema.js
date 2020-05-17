@@ -4,7 +4,6 @@ const { Types } = mongoose;
 
 const moneyIn = new Schema(
   {
-    _id: Schema.Types.ObjectId,
     name: {
       type: String,
       trim: true,
@@ -21,6 +20,10 @@ const moneyIn = new Schema(
     },
     date: {
       type: Date,
+      required: true,
+    },
+    filename: {
+      type: String,
       required: true,
     },
   },
