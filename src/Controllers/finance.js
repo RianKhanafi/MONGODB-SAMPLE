@@ -1,9 +1,10 @@
 const { MoneyIn, Spending, CashFlow } = require("../Schema/finance.schema");
 const fs = require("fs");
 const { checkImageType } = require("../libs/multerStorage");
+const sharp = require("sharp");
 
 module.exports = {
-  ADD_NEW_INCOME: (req, res) => {
+  ADD_NEW_INCOME: async (req, res, next) => {
     const {
       body: { name, nominal, desription, date },
       file,
@@ -15,40 +16,60 @@ module.exports = {
       date,
       filename: file.filename,
     };
-    const check = checkImageType(file);
+    sharp(file.path)
+      .resize(800, 800, {
+        fit: sharp.fit.inside,
+        withoutEnlargement: true,
+      })
 
-    if (!check) {
-      res.json({ message: "Jpeg or png only" });
-    } else {
-      const moneyInSave = new MoneyIn(data);
-      moneyInSave
-        .save()
-        .then((result) => {
-          const cashflowData = {
-            casin_id: result._id,
-            date: result.date,
-          };
-          const cashFlowSave = new CashFlow(cashflowData);
-          cashFlowSave
-            .save(cashFlowSave)
-            .then((result) => {
-              res.json({
-                status: 200,
-                message: "New Income and Cash Flow Added",
-                data: result,
-              });
-            })
-            .catch((error) =>
-              res.status(500).json({ status: 500, message: error })
-            );
-        })
-        .catch((error) => {
-          res.status(500).json({
-            status: 500,
-            message: error,
-          });
-        });
-    }
+      .toFormat("jpeg")
+      .toBuffer()
+      .then(function (outputBuffer) {
+        fs.writeFileSync(file.path, outputBuffer);
+        // outputBuffer contains JPEG image data
+        // no wider and no higher than 200 pixels
+        // and no larger than the input image
+      })
+      .catch((err) => {
+        next(err);
+      });
+
+    // console.log(ya);
+
+    // const { filename: image } = req.file;
+    // const check = checkImageType(file);
+    // if (!check) {
+    //   res.json({ message: "Jpeg or png only" });
+    // } else {
+    //   const moneyInSave = new MoneyIn(data);
+    //   moneyInSave
+    //     .save()
+    //     .then((result) => {
+    //       const cashflowData = {
+    //         casin_id: result._id,
+    //         date: result.date,
+    //       };
+    //       const cashFlowSave = new CashFlow(cashflowData);
+    //       cashFlowSave
+    //         .save(cashFlowSave)
+    //         .then((result) => {
+    //           res.json({
+    //             status: 200,
+    //             message: "New Income and Cash Flow Added",
+    //             data: result,
+    //           });
+    //         })
+    //         .catch((error) =>
+    //           res.status(500).json({ status: 500, message: error })
+    //         );
+    //     })
+    //     .catch((error) => {
+    //       res.status(500).json({
+    //         status: 500,
+    //         message: error,
+    //       });
+    //     });
+    // }
   },
   GET_ALL_INCOME: (req, res) => {
     MoneyIn.find()

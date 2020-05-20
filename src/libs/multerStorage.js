@@ -2,7 +2,7 @@ const multer = require("multer");
 
 // SET STORAGE
 const storage = multer.diskStorage({
-  destination: function (_, file, cb) {
+  destination: async function (_, file, cb) {
     const checkImage = checkImageType(file);
     if (checkImage) {
       cb(null, "uploads");
@@ -11,7 +11,7 @@ const storage = multer.diskStorage({
     }
   },
   filename: function (req, file, cb) {
-    cb(null, imageName(file));
+    cb(null, file.fieldname + "-" + Date.now() + ".jpg");
   },
 });
 
@@ -20,10 +20,6 @@ const checkImageType = (file) => {
   // const extname = filetypes.test(Path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
   return mimetype;
-};
-
-const imageName = (file) => {
-  return file.fieldname + "-" + Date.now();
 };
 
 const upload = multer({ storage: storage });
